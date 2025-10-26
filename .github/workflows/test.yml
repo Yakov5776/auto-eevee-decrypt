@@ -45,6 +45,8 @@ jobs:
               client = TelegramClient("session", api_id, api_hash)
               await client.start()
               print("Logged in")
+              ipa_received = asyncio.Event()
+              downloaded_path = None
 
               @client.on(events.NewMessage(from_users=target_bot))
               async def handler(event):
