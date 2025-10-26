@@ -46,17 +46,18 @@ jobs:
               await client.start()
               print("Logged in")
 
-              # Send /getfile command to the bot
-              await client.send_message(target_bot, roblox_app_url)
-
-              # Wait for a document reply
-              async for msg in client.iter_messages(target_bot, limit=10):
-                  if msg.file:
-                      path = await msg.download_media()
-                      print(f"✅ File downloaded: {path}")
-                      break
-              else:
-                  print("❌ No recent file message found.")
+              @client.on(events.NewMessage(from_users=target_bot))
+              async def handler(event):
+                  nonlocal downloaded_path
+                  if event.file and event.file.name and event.file.name.endswith(".ipa"):
+                      downloaded_path = await event.download_media()
+                      print(f"✅ IPA file downloaded: {downloaded_path}")
+                      ipa_received.set()
+              
+              try:
+                  await asyncio.wait_for(ipa_received.wait(), timeout=120)
+              except asyncio.TimeoutError:
+                print("❌ Timed out waiting for IPA response.")
 
               await client.disconnect()
 
