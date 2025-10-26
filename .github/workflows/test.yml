@@ -1,8 +1,7 @@
 name: Fetch daily Telegram file
 
 on:
-  schedule:
-    - cron: "0 6 * * *" # Every day at 6 AM UTC
+  push:
   workflow_dispatch:
 
 jobs:
@@ -20,16 +19,12 @@ jobs:
       - name: Install Telethon
         run: pip install telethon==1.38.1
 
-      - name: Decode Telegram session
-        env:
-          TELEGRAM_SESSION_B64: ${{ secrets.TELEGRAM_SESSION_B64 }}
-        run: echo "$TELEGRAM_SESSION_B64" | base64 -d > session.session
-
       - name: Fetch file using Telethon
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-          TARGET_BOT_USERNAME: ${{ secrets.TARGET_BOT_USERNAME }}
+          TARGET_BOT_USERNAME: '@eeveedecrypterbot'
+          ROBLOX_APP_URL: 'https://apps.apple.com/us/app/roblox/id431946152'
         run: |
           python <<'PYCODE'
           import asyncio
@@ -39,15 +34,15 @@ jobs:
           api_id = int(os.environ["TELEGRAM_API_ID"])
           api_hash = os.environ["TELEGRAM_API_HASH"]
           target_bot = os.environ["TARGET_BOT_USERNAME"]
+          roblox_app_url = os.environ["ROBLOX_APP_URL"]
 
           async def main():
-              client = TelegramClient("session", api_id, api_hash)
+              client = TelegramClient("rblx_session", api_id, api_hash)
               await client.start()
-              print("✅ Logged in as user.")
+              print("Logged in")
 
               # Send /getfile command to the bot
-              await client.send_message(target_bot, "/getfile")
-              print(f"📨 Sent /getfile to {target_bot}")
+              await client.send_message(target_bot, roblox_app_url)
 
               # Wait for a document reply
               async for msg in client.iter_messages(target_bot, limit=10):
