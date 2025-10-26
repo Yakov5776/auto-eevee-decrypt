@@ -19,6 +19,11 @@ jobs:
       - name: Install Telethon
         run: pip install telethon==1.38.1
 
+      - name: Decode Telegram session
+        env:
+          TELEGRAM_SESSION_B64: ${{ secrets.TELEGRAM_SESSION_B64 }}
+        run: echo "$TELEGRAM_SESSION_B64" | base64 -d > session.session
+
       - name: Fetch file using Telethon
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
@@ -37,7 +42,7 @@ jobs:
           roblox_app_url = os.environ["ROBLOX_APP_URL"]
 
           async def main():
-              client = TelegramClient("rblx_session", api_id, api_hash)
+              client = TelegramClient("session", api_id, api_hash)
               await client.start()
               print("Logged in")
 
