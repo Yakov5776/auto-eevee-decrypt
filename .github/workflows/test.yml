@@ -55,6 +55,9 @@ jobs:
                       downloaded_path = await event.download_media()
                       print(f"✅ IPA file downloaded: {downloaded_path}")
                       ipa_received.set()
+
+              await client.send_message(target_bot, roblox_app_url)
+              print("Sent request, waiting for IPA...")
               
               try:
                   await asyncio.wait_for(ipa_received.wait(), timeout=120)
