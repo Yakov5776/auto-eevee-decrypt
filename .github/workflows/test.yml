@@ -1,0 +1,64 @@
+name: Fetch daily Telegram file
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # Every day at 6 AM UTC
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Telethon
+        run: pip install telethon==1.38.1
+
+      - name: Decode Telegram session
+        env:
+          TELEGRAM_SESSION_B64: ${{ secrets.TELEGRAM_SESSION_B64 }}
+        run: echo "$TELEGRAM_SESSION_B64" | base64 -d > session.session
+
+      - name: Fetch file using Telethon
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TARGET_BOT_USERNAME: ${{ secrets.TARGET_BOT_USERNAME }}
+        run: |
+          python <<'PYCODE'
+          import asyncio
+          import os
+          from telethon import TelegramClient, events
+
+          api_id = int(os.environ["TELEGRAM_API_ID"])
+          api_hash = os.environ["TELEGRAM_API_HASH"]
+          target_bot = os.environ["TARGET_BOT_USERNAME"]
+
+          async def main():
+              client = TelegramClient("session", api_id, api_hash)
+              await client.start()
+              print("✅ Logged in as user.")
+
+              # Send /getfile command to the bot
+              await client.send_message(target_bot, "/getfile")
+              print(f"📨 Sent /getfile to {target_bot}")
+
+              # Wait for a document reply
+              async for msg in client.iter_messages(target_bot, limit=10):
+                  if msg.file:
+                      path = await msg.download_media()
+                      print(f"✅ File downloaded: {path}")
+                      break
+              else:
+                  print("❌ No recent file message found.")
+
+              await client.disconnect()
+
+          asyncio.run(main())
+          PYCODE
